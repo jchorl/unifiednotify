@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>UnifitedNotify</title>
+    <meta charset="UTF-8">
+  </head>
+  <body>
+    <script src="//code.jquery.com/jquery-2.2.1.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="fb.js"></script>
+
+    <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+    <div id="status"></div>
+  </body>
+</html>

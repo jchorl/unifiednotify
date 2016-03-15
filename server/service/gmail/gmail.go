@@ -4,8 +4,8 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
-	"server/auth"
 	"server/service"
+	"server/service/auth"
 )
 
 type Message struct {

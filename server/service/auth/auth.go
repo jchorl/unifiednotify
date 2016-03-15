@@ -10,8 +10,8 @@ import (
 )
 
 var conf *oauth2.Config = &oauth2.Config{
-	ClientID:     credentials.CLIENT_ID,
-	ClientSecret: credentials.CLIENT_SECRET,
+	ClientID:     credentials.GOOGLE_CLIENT_ID,
+	ClientSecret: credentials.GOOGLE_CLIENT_SECRET,
 	RedirectURL:  constants.BASE_URL + "/googleoauthcallback",
 	Scopes: []string{
 		gmail.GmailReadonlyScope,
