@@ -24,14 +24,19 @@ func authUser(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
 	decoder := json.NewDecoder(r.Body)
 	var req user.AuthReq
+	log.Debugf(c, "received request to auth user")
 	err := decoder.Decode(&req)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
-	log.Infof(c, "Attempting to authenticate token %s\n", req.Token)
-	authenticated, err := user.VerifyToken(c, req)
-	log.Infof(c, "%t\n", authenticated)
+	userId, err := user.GetUserId(c, req)
+	log.Debugf(c, "authed with userId: %s", userId)
+	if err != nil {
+		log.Errorf(c, err.Error())
+		panic(err)
+	}
+	fmt.Fprint(w, userId)
 }
 
 func authGoogle(w http.ResponseWriter, r *http.Request) {
