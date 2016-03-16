@@ -5,6 +5,10 @@ function authenticate(service, token) {
 			   token: token
 		   }),
 		   function(jwt) {
-			   console.log("got jwt: " + jwt);
+			   $.ajaxSetup({
+				   headers: {
+					   'Authorization': 'Bearer ' + jwt
+				   }
+			   });
 		   });
 }

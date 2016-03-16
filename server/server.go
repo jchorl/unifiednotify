@@ -3,21 +3,24 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"net/http"
 	"server/constants"
+	"server/credentials"
 	"server/service/auth"
 	"server/service/gmail"
 	"server/tokenstore"
 	"server/user"
+	"server/user/usermiddleware"
 )
 
 func init() {
 	http.HandleFunc("/auth", authUser)
-	http.HandleFunc("/authgoogle", authGoogle)
-	http.HandleFunc("/googleoauthcallback", authGoogleCallback)
-	http.HandleFunc("/donegoogleauth", doneGoogleAuth)
+	http.HandleFunc("/authgoogle", usermiddleware.NewAuthHandleFunc(authGoogle))
+	http.HandleFunc("/googleoauthcallback", usermiddleware.NewAuthHandleFunc(authGoogleCallback))
+	http.HandleFunc("/donegoogleauth", usermiddleware.NewAuthHandleFunc(doneGoogleAuth))
 }
 
 func authUser(w http.ResponseWriter, r *http.Request) {
@@ -36,19 +39,26 @@ func authUser(w http.ResponseWriter, r *http.Request) {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
-	fmt.Fprint(w, userId)
+	token := jwt.New(jwt.SigningMethodHS256)
+	token.Claims["userId"] = userId
+	tokenStr, err := token.SignedString([]byte(credentials.JWT_SIGNING_KEY))
+	if err != nil {
+		log.Errorf(c, err.Error())
+		panic(err)
+	}
+	log.Debugf(c, "Token: %s", tokenStr)
+	fmt.Fprint(w, tokenStr)
 }
 
-func authGoogle(w http.ResponseWriter, r *http.Request) {
-	url := auth.GetAuthUrl("josh")
+func authGoogle(w http.ResponseWriter, r *http.Request, userId string) {
+	url := auth.GetAuthUrl(userId)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func authGoogleCallback(w http.ResponseWriter, r *http.Request) {
+func authGoogleCallback(w http.ResponseWriter, r *http.Request, userId string) {
 	c := appengine.NewContext(r)
 	// TODO: handle the case where error=access_denied
 	code := r.FormValue("code")
-	userID := r.FormValue("state")
 	tok, err := auth.GetToken(c, code)
 	if err != nil {
 		log.Errorf(c, err.Error())
@@ -56,7 +66,7 @@ func authGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save the token
-	err = tokenstore.SaveToken(c, userID, tokenstore.GOOGLE_TOKEN, tok)
+	err = tokenstore.SaveToken(c, userId, tokenstore.GOOGLE_TOKEN, tok)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
@@ -67,9 +77,9 @@ func authGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func doneGoogleAuth(w http.ResponseWriter, r *http.Request) {
+func doneGoogleAuth(w http.ResponseWriter, r *http.Request, userId string) {
 	c := appengine.NewContext(r)
-	tkn, err := tokenstore.GetToken(c, "josh", tokenstore.GOOGLE_TOKEN)
+	tkn, err := tokenstore.GetToken(c, userId, tokenstore.GOOGLE_TOKEN)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
