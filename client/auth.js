@@ -1,14 +1,18 @@
 function authenticate(service, token) {
-	$.post('/auth',
-		   JSON.stringify({
-			   service: service,
-			   token: token
-		   }),
-		   function(jwt) {
-			   $.ajaxSetup({
-				   headers: {
-					   'Authorization': 'Bearer ' + jwt
-				   }
-			   });
-		   });
+	fetch('/auth', {
+		method: 'POST',
+		body: JSON.stringify({
+			service: service,
+			token: token
+		})
+	})
+	.then(function(res) {
+		return res.text();
+	})
+	.then(function(jwt) {
+		console.log(jwt);
+	})
+	.catch(function (error) {
+		console.log(error);
+	});
 }
