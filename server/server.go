@@ -18,9 +18,9 @@ import (
 
 func init() {
 	http.HandleFunc("/auth", authUser)
-	http.HandleFunc("/authgoogle", usermiddleware.NewAuthHandleFunc(authGoogle))
-	http.HandleFunc("/googleoauthcallback", usermiddleware.NewAuthHandleFunc(authGoogleCallback))
-	http.HandleFunc("/donegoogleauth", usermiddleware.NewAuthHandleFunc(doneGoogleAuth))
+	http.HandleFunc("/authgoogle", usermiddleware.NewAuth(authGoogle))
+	http.HandleFunc("/googleoauthcallback", usermiddleware.NewAuth(authGoogleCallback))
+	http.HandleFunc("/donegoogleauth", usermiddleware.NewAuth(doneGoogleAuth))
 }
 
 func authUser(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,15 @@ func authUser(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	log.Debugf(c, "Token: %s", tokenStr)
-	fmt.Fprint(w, tokenStr)
+	cookie := http.Cookie{
+		Name:   "auth",
+		Value:  tokenStr,
+		MaxAge: 604800,
+		// TODO: uncomment for prod
+		// Secure:   true,
+		// HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
 }
 
 func authGoogle(w http.ResponseWriter, r *http.Request, userId string) {
