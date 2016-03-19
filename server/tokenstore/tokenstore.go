@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-const GOOGLE_TOKEN string = "token_google"
-
 type Token struct {
 	AccessToken  string
 	RefreshToken string

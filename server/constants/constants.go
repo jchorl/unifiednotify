@@ -6,6 +6,8 @@ import (
 
 var BASE_URL string
 
+const GMAIL_SERVICE string = "gmail"
+
 func init() {
 	if appengine.IsDevAppServer() {
 		BASE_URL = "http://localhost:8080"

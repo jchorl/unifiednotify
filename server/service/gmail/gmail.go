@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
+	"server/constants"
 	"server/service"
 	"server/service/auth"
 )
@@ -17,7 +18,7 @@ type Message struct {
 }
 
 func GetNotifications(c context.Context, t *oauth2.Token) ([]service.Notification, error) {
-	client := auth.GetConfig().Client(c, t)
+	client := auth.GetConfig(constants.GMAIL_SERVICE).Client(c, t)
 	svc, err := gmail.New(client)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
@@ -18,9 +17,9 @@ import (
 
 func init() {
 	http.HandleFunc("/auth", authUser)
-	http.HandleFunc("/authgoogle", usermiddleware.NewAuth(authGoogle))
-	http.HandleFunc("/googleoauthcallback", usermiddleware.NewAuth(authGoogleCallback))
-	http.HandleFunc("/donegoogleauth", usermiddleware.NewAuth(doneGoogleAuth))
+	http.HandleFunc("/auth/gmail/init", usermiddleware.NewAuth(authGmailInit))
+	http.HandleFunc("/auth/gmail/callback", usermiddleware.NewAuth(authGmailCallback))
+	http.HandleFunc("/notifications", usermiddleware.NewAuth(notifications))
 }
 
 func authUser(w http.ResponseWriter, r *http.Request) {
@@ -58,36 +57,44 @@ func authUser(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &cookie)
 }
 
-func authGoogle(w http.ResponseWriter, r *http.Request, userId string) {
-	url := auth.GetAuthUrl(userId)
+func authInit(w http.ResponseWriter, r *http.Request, userId string, service string) {
+	url := auth.GetAuthUrl(userId, service)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func authGoogleCallback(w http.ResponseWriter, r *http.Request, userId string) {
+func authCallback(w http.ResponseWriter, r *http.Request, userId string, service string) {
 	c := appengine.NewContext(r)
 	// TODO: handle the case where error=access_denied
 	code := r.FormValue("code")
-	tok, err := auth.GetToken(c, code)
+	tok, err := auth.GetToken(c, code, service)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
 
 	// save the token
-	err = tokenstore.SaveToken(c, userId, tokenstore.GOOGLE_TOKEN, tok)
+	err = tokenstore.SaveToken(c, userId, service, tok)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
 
 	// redirect
-	url := constants.BASE_URL + "/donegoogleauth"
+	url := constants.BASE_URL
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func doneGoogleAuth(w http.ResponseWriter, r *http.Request, userId string) {
+func authGmailInit(w http.ResponseWriter, r *http.Request, userId string) {
+	authInit(w, r, userId, constants.GMAIL_SERVICE)
+}
+
+func authGmailCallback(w http.ResponseWriter, r *http.Request, userId string) {
+	authCallback(w, r, userId, constants.GMAIL_SERVICE)
+}
+
+func notifications(w http.ResponseWriter, r *http.Request, userId string) {
 	c := appengine.NewContext(r)
-	tkn, err := tokenstore.GetToken(c, userId, tokenstore.GOOGLE_TOKEN)
+	tkn, err := tokenstore.GetToken(c, userId, constants.GMAIL_SERVICE)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
@@ -97,7 +104,10 @@ func doneGoogleAuth(w http.ResponseWriter, r *http.Request, userId string) {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
-	for _, notification := range notifications {
-		fmt.Fprint(w, notification)
+	enc := json.NewEncoder(w)
+	err = enc.Encode(notifications)
+	if err != nil {
+		log.Errorf(c, err.Error())
+		panic(err)
 	}
 }

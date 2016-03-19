@@ -1,9 +1,11 @@
+var Authenticate = require('./auth')
+
 // This is called with the results from from FB.getLoginStatus().
 function statusChangeCallback(response) {
 	if (response.status === 'connected') {
 		// Logged into your app and Facebook.
 		// send the token to the server to validate and get back a jwt
-		authenticate('fb', FB.getAccessToken());
+		Authenticate('fb', FB.getAccessToken());
 	} else if (response.status === 'not_authorized') {
 		// The person is logged into Facebook, but not your app.
 		document.getElementById('status').innerHTML = 'Please log into this app.';
