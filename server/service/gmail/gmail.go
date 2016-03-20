@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
+	"html"
 	"server/constants"
 	"server/service"
 	"server/service/auth"
@@ -52,15 +53,20 @@ func getIncompleteMessages(svc *gmail.Service) ([]*Message, error) {
 
 func populateMessages(svc *gmail.Service, messages []*Message) ([]*Message, error) {
 	for _, msg := range messages {
-		req := svc.Users.Messages.Get("me", msg.Id).Format("metadata").MetadataHeaders("from", "subject").Fields("internalDate", "payload", "snippet")
+		req := svc.Users.Messages.Get("me", msg.Id).Format("metadata").MetadataHeaders("From", "Subject").Fields("internalDate", "payload", "snippet")
 		r, err := req.Do()
 		if err != nil {
 			return nil, err
 		}
-		msg.Snippet = r.Snippet
+		msg.Snippet = html.UnescapeString(r.Snippet)
 		msg.InternalDate = r.InternalDate
-		msg.Subject = r.Payload.Headers[0].Value
-		msg.Subject = r.Payload.Headers[1].Value
+		for _, header := range r.Payload.Headers {
+			if header.Name == "From" {
+				msg.Sender = header.Value
+			} else if header.Name == "Subject" {
+				msg.Subject = header.Value
+			}
+		}
 	}
 	return messages, nil
 }
@@ -69,6 +75,7 @@ func getNotificationsFromMessages(messages []*Message) []service.Notification {
 	var notifications []service.Notification
 	for _, msg := range messages {
 		notifications = append(notifications, service.Notification{
+			Id:      constants.GMAIL_SERVICE + msg.Id,
 			Line1:   msg.Sender,
 			Line2:   msg.Subject,
 			Line3:   msg.Snippet,

@@ -11,7 +11,7 @@ import (
 
 func GetAuthUrl(userID string, service string) string {
 	conf := GetConfig(service)
-	return conf.AuthCodeURL(userID)
+	return conf.AuthCodeURL(userID, oauth2.AccessTypeOffline)
 }
 
 func GetToken(c context.Context, code string, service string) (*oauth2.Token, error) {

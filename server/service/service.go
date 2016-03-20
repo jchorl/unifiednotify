@@ -7,12 +7,13 @@ import (
 )
 
 type Notification struct {
-	Line1   string
-	Line2   string
-	Line3   string
-	Date    int64
-	URL     string
-	IconURL string
+	Id      string `json:"id"`
+	Line1   string `json:"line1"`
+	Line2   string `json:"line2"`
+	Line3   string `json:"line3"`
+	Date    int64  `json:"date"`
+	URL     string `json:"url"`
+	IconURL string `json:"iconUrl"`
 }
 
 type Service interface {

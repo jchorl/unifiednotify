@@ -1,4 +1,4 @@
-module.exports = function() {
+module.exports = function(cb) {
 	fetch('/notifications', {
 		method: 'GET',
 		credentials: 'same-origin',
@@ -6,10 +6,8 @@ module.exports = function() {
 	.then(function(res) {
 		return res.json();
 	})
-	.then(function(parsed) {
-		console.log(parsed);
-	})
+	.then(cb)
 	.catch(function (error) {
 		console.log(error);
 	});
-}
+};

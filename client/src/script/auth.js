@@ -1,5 +1,3 @@
-var GetNotifications = require('./notifications.js');
-
 module.exports = function(service, token) {
 	fetch('/auth', {
 		method: 'POST',
@@ -11,7 +9,7 @@ module.exports = function(service, token) {
 	})
 	.then(function(res) {
 		if (res.ok) {
-			GetNotifications();
+			console.log('authd')
 		}
 	})
 	.catch(function (error) {
