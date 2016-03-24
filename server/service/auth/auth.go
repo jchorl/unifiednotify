@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/gmail/v1"
 	"server/constants"
 	"server/credentials"
@@ -29,6 +30,16 @@ func GetConfig(service string) *oauth2.Config {
 			RedirectURL:  constants.BASE_URL + "/auth/gmail/callback",
 			Scopes: []string{
 				gmail.GmailReadonlyScope,
+			},
+			Endpoint: google.Endpoint,
+		}
+	case constants.GCAL_SERVICE:
+		conf = &oauth2.Config{
+			ClientID:     credentials.GCAL_CLIENT_ID,
+			ClientSecret: credentials.GCAL_CLIENT_SECRET,
+			RedirectURL:  constants.BASE_URL + "/auth/gcal/callback",
+			Scopes: []string{
+				calendar.CalendarReadonlyScope,
 			},
 			Endpoint: google.Endpoint,
 		}

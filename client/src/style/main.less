@@ -18,12 +18,14 @@
       box-sizing: border-box;
       display: flex;
       position: relative;
+      color: inherit;
+      text-decoration: none;
 
       .notification-img-container {
         width: 11%;
         margin-right: 4%;
         background-repeat: no-repeat;
-        background-size: contain;
+        background-size: 100%;
         background-position: center center;
       }
 
@@ -46,8 +48,16 @@
           overflow-x: hidden;
         }
 
-        .line1 {
-          color: #202020;
+        .line1-container {
+          display: flex;
+          justify-content: space-between;
+
+          .line1 {
+            color: #202020;
+          }
+
+          .date {
+          }
         }
 
         .line2 {

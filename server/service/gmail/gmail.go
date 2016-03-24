@@ -37,8 +37,7 @@ func GetNotifications(c context.Context, t tokenstore.Token) ([]service.Notifica
 }
 
 func getIncompleteMessages(svc *gmail.Service) ([]*Message, error) {
-	req := svc.Users.Messages.List("me").MaxResults(5).Q("in:inbox")
-	r, err := req.Do()
+	r, err := svc.Users.Messages.List("me").MaxResults(5).Q("in:inbox").Do()
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +52,7 @@ func getIncompleteMessages(svc *gmail.Service) ([]*Message, error) {
 
 func populateMessages(svc *gmail.Service, messages []*Message) ([]*Message, error) {
 	for _, msg := range messages {
-		req := svc.Users.Messages.Get("me", msg.Id).Format("metadata").MetadataHeaders("From", "Subject").Fields("internalDate", "payload", "snippet")
-		r, err := req.Do()
+		r, err := svc.Users.Messages.Get("me", msg.Id).Format("metadata").MetadataHeaders("From", "Subject").Fields("internalDate", "payload", "snippet").Do()
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +77,7 @@ func getNotificationsFromMessages(messages []*Message) []service.Notification {
 			Line1:   msg.Sender,
 			Line2:   msg.Subject,
 			Line3:   msg.Snippet,
-			Date:    msg.InternalDate,
+			Date:    msg.InternalDate / 1000,
 			URL:     "https://gmail.com",
 			IconURL: "https://trainerlearningcenter.withgoogle.com/assets/images/gmail.png",
 		})

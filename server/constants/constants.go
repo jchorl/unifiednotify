@@ -5,6 +5,7 @@ import (
 )
 
 const GMAIL_SERVICE string = "gmail"
+const GCAL_SERVICE string = "gcal"
 
 var BASE_URL string
 
