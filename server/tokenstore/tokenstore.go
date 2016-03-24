@@ -7,14 +7,17 @@ import (
 	"time"
 )
 
+const datastore_key string = "token"
+
 type Token struct {
 	AccessToken  string
 	RefreshToken string
 	Expiry       time.Time
 	TokenType    string
+	Kind         string
 }
 
-func (t Token) toOauth() *oauth2.Token {
+func (t Token) ToOauth() *oauth2.Token {
 	return &oauth2.Token{
 		AccessToken:  t.AccessToken,
 		RefreshToken: t.RefreshToken,
@@ -23,25 +26,37 @@ func (t Token) toOauth() *oauth2.Token {
 	}
 }
 
-func toToken(t *oauth2.Token) *Token {
+func ToToken(t *oauth2.Token, kind string) *Token {
 	return &Token{
 		AccessToken:  t.AccessToken,
 		RefreshToken: t.RefreshToken,
 		Expiry:       t.Expiry,
 		TokenType:    t.TokenType,
+		Kind:         kind,
 	}
 }
 
-func GetToken(c context.Context, userID string, kind string) (*oauth2.Token, error) {
-	t := new(Token)
-	err := datastore.Get(c, datastore.NewKey(c, kind, userID, 0, nil), t)
+func GetTokensByUser(c context.Context, userId string) ([]Token, error) {
+	key, err := datastore.DecodeKey(userId)
 	if err != nil {
 		return nil, err
 	}
-	return t.toOauth(), nil
+	q := datastore.NewQuery(datastore_key).Ancestor(key)
+
+	var tokens []Token
+	_, err = q.GetAll(c, &tokens)
+	if err != nil {
+		return nil, err
+	}
+	return tokens, nil
 }
 
-func SaveToken(c context.Context, userID string, kind string, token *oauth2.Token) error {
-	_, err := datastore.Put(c, datastore.NewKey(c, kind, userID, 0, nil), toToken(token))
+func SaveToken(c context.Context, userId string, token *Token) error {
+	key, err := datastore.DecodeKey(userId)
+	if err != nil {
+		return err
+	}
+
+	_, err = datastore.Put(c, datastore.NewIncompleteKey(c, datastore_key, key), token)
 	return err
 }

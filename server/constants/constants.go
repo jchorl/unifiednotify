@@ -4,9 +4,9 @@ import (
 	"google.golang.org/appengine"
 )
 
-var BASE_URL string
-
 const GMAIL_SERVICE string = "gmail"
+
+var BASE_URL string
 
 func init() {
 	if appengine.IsDevAppServer() {

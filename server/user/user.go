@@ -10,7 +10,7 @@ import (
 	"server/credentials"
 )
 
-const USER_ACCOUNT string = "user_account"
+const datastore_key string = "user"
 
 type AuthReq struct {
 	Service string `json:"service"`
@@ -38,7 +38,7 @@ func GetUserId(c context.Context, req AuthReq) (string, error) {
 }
 
 func getOrCreateUserId(c context.Context, service string, id string) (string, error) {
-	q := datastore.NewQuery(USER_ACCOUNT).Filter(service+" =", id).KeysOnly().Limit(1)
+	q := datastore.NewQuery(datastore_key).Filter(service+" =", id).KeysOnly().Limit(1)
 	keys, err := q.GetAll(c, nil)
 	if err != nil {
 		return "", err
@@ -54,7 +54,7 @@ func getOrCreateUserId(c context.Context, service string, id string) (string, er
 	case "fb":
 		user.FbId = id
 	}
-	key, err := datastore.Put(c, datastore.NewIncompleteKey(c, USER_ACCOUNT, nil), &user)
+	key, err := datastore.Put(c, datastore.NewIncompleteKey(c, datastore_key, nil), &user)
 	log.Debugf(c, "queried for user, but didnt find. created new user: ", key.Encode())
 	if err != nil {
 		return "", err

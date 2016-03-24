@@ -2,12 +2,12 @@ package gmail
 
 import (
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
 	"html"
 	"server/constants"
 	"server/service"
 	"server/service/auth"
+	"server/tokenstore"
 )
 
 type Message struct {
@@ -18,8 +18,8 @@ type Message struct {
 	Sender       string
 }
 
-func GetNotifications(c context.Context, t *oauth2.Token) ([]service.Notification, error) {
-	client := auth.GetConfig(constants.GMAIL_SERVICE).Client(c, t)
+func GetNotifications(c context.Context, t tokenstore.Token) ([]service.Notification, error) {
+	client := auth.GetConfig(constants.GMAIL_SERVICE).Client(c, t.ToOauth())
 	svc, err := gmail.New(client)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func GetNotifications(c context.Context, t *oauth2.Token) ([]service.Notificatio
 }
 
 func getIncompleteMessages(svc *gmail.Service) ([]*Message, error) {
-	req := svc.Users.Messages.List("me").MaxResults(10).Q("in:inbox")
+	req := svc.Users.Messages.List("me").MaxResults(5).Q("in:inbox")
 	r, err := req.Do()
 	if err != nil {
 		return nil, err

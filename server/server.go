@@ -8,15 +8,19 @@ import (
 	"net/http"
 	"server/constants"
 	"server/credentials"
+	"server/service"
 	"server/service/auth"
 	"server/service/gmail"
 	"server/tokenstore"
 	"server/user"
 	"server/user/usermiddleware"
+	"sort"
 )
 
 func init() {
-	http.HandleFunc("/auth", authUser)
+	service.SERVICE_MAPPINGS[constants.GMAIL_SERVICE] = gmail.GetNotifications
+
+	http.HandleFunc("/auth", usermiddleware.NewReturnIfAuthd(authUser))
 	http.HandleFunc("/auth/gmail/init", usermiddleware.NewAuth(authGmailInit))
 	http.HandleFunc("/auth/gmail/callback", usermiddleware.NewAuth(authGmailCallback))
 	http.HandleFunc("/notifications", usermiddleware.NewAuth(notifications))
@@ -73,7 +77,8 @@ func authCallback(w http.ResponseWriter, r *http.Request, userId string, service
 	}
 
 	// save the token
-	err = tokenstore.SaveToken(c, userId, service, tok)
+	parsed := tokenstore.ToToken(tok, service)
+	err = tokenstore.SaveToken(c, userId, parsed)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
@@ -94,16 +99,25 @@ func authGmailCallback(w http.ResponseWriter, r *http.Request, userId string) {
 
 func notifications(w http.ResponseWriter, r *http.Request, userId string) {
 	c := appengine.NewContext(r)
-	tkn, err := tokenstore.GetToken(c, userId, constants.GMAIL_SERVICE)
+	tkns, err := tokenstore.GetTokensByUser(c, userId)
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
-	notifications, err := gmail.GetNotifications(c, tkn)
+
+	var notifications []service.Notification
+	for _, tok := range tkns {
+		nots, err := service.SERVICE_MAPPINGS[tok.Kind](c, tok)
+		if err != nil {
+			break
+		}
+		notifications = append(notifications, nots...)
+	}
 	if err != nil {
 		log.Errorf(c, err.Error())
 		panic(err)
 	}
+	sort.Sort(service.ByDate(notifications))
 	enc := json.NewEncoder(w)
 	err = enc.Encode(notifications)
 	if err != nil {
