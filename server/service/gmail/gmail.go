@@ -8,13 +8,14 @@ import (
 	"server/service"
 	"server/service/auth"
 	"server/tokenstore"
+	"time"
 )
 
 type Message struct {
 	Id           string
 	Subject      string
 	Snippet      string
-	InternalDate int64
+	InternalDate time.Time
 	Sender       string
 }
 
@@ -57,7 +58,8 @@ func populateMessages(svc *gmail.Service, messages []*Message) ([]*Message, erro
 			return nil, err
 		}
 		msg.Snippet = html.UnescapeString(r.Snippet)
-		msg.InternalDate = r.InternalDate
+		// need to convert ms-epoch date to time.Time
+		msg.InternalDate = time.Unix(r.InternalDate/1000, 0)
 		for _, header := range r.Payload.Headers {
 			if header.Name == "From" {
 				msg.Sender = header.Value
@@ -77,7 +79,7 @@ func getNotificationsFromMessages(messages []*Message) []service.Notification {
 			Line1:   msg.Sender,
 			Line2:   msg.Subject,
 			Line3:   msg.Snippet,
-			Date:    msg.InternalDate / 1000,
+			Date:    msg.InternalDate,
 			URL:     "https://gmail.com",
 			IconURL: "https://trainerlearningcenter.withgoogle.com/assets/images/gmail.png",
 		})

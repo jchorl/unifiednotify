@@ -18,7 +18,7 @@ type Calendar struct {
 type Event struct {
 	Id          string
 	Link        string
-	Start       int64
+	Start       time.Time
 	AllDay      bool
 	Summary     string
 	Description string
@@ -78,7 +78,7 @@ func populateAndAggregate(svc *calendar.Service, calendars []*Calendar) ([]*Even
 			events = append(events, &Event{
 				Id:          ev.Id,
 				Link:        ev.HtmlLink,
-				Start:       start.Unix(),
+				Start:       start,
 				AllDay:      allDay,
 				Summary:     ev.Summary,
 				Description: ev.Description,
@@ -96,7 +96,7 @@ func parseStart(tm *calendar.EventDateTime) (time.Time, bool, error) {
 	}
 	parsed, err := time.Parse("2006-01-02", tm.Date)
 	// set for 11:59:59:...
-	parsed.Add(time.Duration(24)*time.Hour - time.Second)
+	parsed.Add(time.Duration(24)*time.Hour - time.Duration(1)*time.Second)
 	return parsed, false, err
 }
 
