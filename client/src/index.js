@@ -1,13 +1,11 @@
-var ReactDOM = require('react-dom');
-var React = require('react');
+let ReactDOM = require('react-dom');
+let React = require('react');
 
-var auth = require('./script/auth');
-var fb = require('./script/fb');
-
-var NotificationContainer = require('./script/notificationContainer.js');
-var styles = require('./style/main.less');
+let fb = require('./script/fb');
+let RootComponent = require('./script/rootComponent.js');
+let styles = require('./style/main.less');
 
 ReactDOM.render(
-	<NotificationContainer />,
+	<RootComponent />,
 	document.getElementById('main')
 );
