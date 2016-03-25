@@ -9,7 +9,14 @@ class LoginMenu extends React.Component {
 		});
 	}
 	render() {
-		return <button onClick={this.loginWithFacebook}>Login with Facebook</button>
+		return (
+			<div id="login-menu">
+				<button className="login-button fb" onClick={this.loginWithFacebook}>
+					<span className="icon"><i className="fa fa-facebook"></i></span>
+					<span className="text">Login with Facebook</span>
+				</button>
+			</div>
+		);
 	}
 }
 
