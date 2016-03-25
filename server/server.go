@@ -121,8 +121,9 @@ func notifications(w http.ResponseWriter, r *http.Request, userId string) {
 	for _, tok := range tkns {
 		nots, err := service.SERVICE_MAPPINGS[tok.Kind](c, tok)
 		if err != nil {
+			log.Errorf(c, "Error retrieving notifications from service: %s", tok.Kind)
 			log.Errorf(c, err.Error())
-			panic(err)
+			continue
 		}
 		notifications = append(notifications, nots...)
 	}
