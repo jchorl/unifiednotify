@@ -4,6 +4,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/api/gmail/v1"
 	"html"
+	"net/mail"
 	"server/constants"
 	"server/service"
 	"server/service/auth"
@@ -67,6 +68,15 @@ func populateMessages(svc *gmail.Service, messages []*Message) ([]*Message, erro
 				msg.Subject = header.Value
 			}
 		}
+		parsed, err := mail.ParseAddress(msg.Sender)
+		if err != nil {
+			return nil, err
+		}
+		if parsed.Name != "" {
+			msg.Sender = parsed.Name
+		} else if parsed.Address != "" {
+			msg.Sender = parsed.Address
+		}
 	}
 	return messages, nil
 }
@@ -80,7 +90,7 @@ func getNotificationsFromMessages(messages []*Message) []service.Notification {
 			Line2:   msg.Subject,
 			Line3:   msg.Snippet,
 			Date:    msg.InternalDate,
-			URL:     "https://gmail.com",
+			URL:     "https://mail.google.com",
 			IconURL: "https://trainerlearningcenter.withgoogle.com/assets/images/gmail.png",
 		})
 	}
