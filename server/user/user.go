@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/huandu/facebook"
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
@@ -18,7 +20,8 @@ type AuthReq struct {
 }
 
 type User struct {
-	FbId string `datastore:"fb",json:"fb_id"`
+	FbId     string `datastore:"fb",json:"fb_id"`
+	GoogleId string `datastore:"google",json:"google_id"`
 }
 
 var app = facebook.New(credentials.FACEBOOK_CLIENT_ID, credentials.FACEBOOK_CLIENT_SECRET)
@@ -33,6 +36,14 @@ func GetUserId(c context.Context, req AuthReq) (string, error) {
 		}
 		log.Debugf(c, "fb responded, valid token with fbid: %s", fbUserId)
 		return getOrCreateUserId(c, req.Service, fbUserId)
+	case "google":
+		log.Debugf(c, "getting user id from google user")
+		googleUserId, err := getGoogleUserId(c, req.Token)
+		if err != nil {
+			return "", err
+		}
+		log.Debugf(c, "google responded, valid token with googleid: %s", googleUserId)
+		return getOrCreateUserId(c, req.Service, googleUserId)
 	}
 	return "", errors.New("Unable to authenticate user")
 }
@@ -76,4 +87,22 @@ func getFBUserId(c context.Context, token string) (string, error) {
 	res.DecodeField("id", &id)
 
 	return id, nil
+}
+
+func getGoogleUserId(c context.Context, token string) (string, error) {
+	var config = &oauth2.Config{
+		ClientID:     credentials.GOOGLE_CLIENT_ID,
+		ClientSecret: credentials.GOOGLE_CLIENT_SECRET,
+		Scopes:       []string{"profile"},
+		Endpoint:     google.Endpoint,
+		// Use "postmessage" for the code-flow for server side apps
+		RedirectURL: "postmessage",
+	}
+
+	tok, err := config.Exchange(c, token)
+	if err != nil {
+		return "", err
+	}
+
+	return tok.Extra("id_token").(string), nil
 }

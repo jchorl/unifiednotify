@@ -1,7 +1,12 @@
 let alreadyAuthd = false;
+let rootComponent = null;
 
 class Auth {
-	static auth(service, token, cb) {
+	static setRootComponent(rc) {
+		rootComponent = rc;
+	}
+
+	static auth(service, token) {
 		fetch('/auth', {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -13,7 +18,11 @@ class Auth {
 		.then(function() {
 			alreadyAuthd = true;
 		})
-		.then(cb)
+		.then(function() {
+			if (rootComponent) {
+				rootComponent.forceUpdate();
+			}
+		})
 		.catch(function (error) {
 			console.log(error);
 		});
